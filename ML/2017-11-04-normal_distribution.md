@@ -1,0 +1,201 @@
+---
+layout: post
+title: 正态分布
+tags: ml
+categories: machine-learning
+---
+
+# 定义
+
+正态分布(**Normal Distribution**)又名高斯分布(**Gaussian Distribution**)，是现代社会中被大量运用的一种概率分布。
+
+若随机变量Ｘ服从一个位置参数为μ、尺度参数为σ的概率分布，记为：
+$$
+X \sim N( \mu , \sigma^2)
+$$
+其概率密度函数为：
+$$
+f(x) = \frac{1}{\sqrt{2\pi}\sigma} e^ - \frac{ (x - \mu)^2 }{2\sigma^2}
+$$
+其曲线如下：
+
+![](https://ws3.sinaimg.cn/large/006tKfTcly1fl6c2bnxbdj30cz0830tf.jpg)
+
+若一个指标受到许多因素的影响，并且其中任何一个因素都不对其产生决定性的影响，那么该指标的值很可能近似于正态分布。
+
+- 独立同分布的随机变量；随机变量多次平均稳定后的概率服从正态分布
+- N个正态分布的变量的线性组合也服从正态分布。
+- 二项分布的极限分布是正态分布
+- 当样本量N趋于无穷时，其极限分布都有正态的形式
+
+类型：
+
+1. 严格正态分布：一般只会出现在理想的物理系统中，例如热力学系统中最大熵原理导致理想气体分子的速度服从正态分布
+2. 近似正态分布：如果一些变量服从相似的分布并且相关性较弱，那么它们的平均值就是近似正态分布的
+3. 假设正态分布：多数情况下，可以假设变量的分布服从正态分布；比如说误差分析
+
+
+# 推导
+
+假设已知随机变量X服从参数为n和p的二项分布，记作X ~ B(n,p)，那么其概率密度函数为
+$$
+\tag{1} b(n , p , i) = {n \choose k} p^k (1-p)^{n-k}
+$$
+求X落在二项分布中心点一定范围的概率$P_d = P(|X-np| \leq d)$
+
+证明：
+
+考虑p=1/2的情形，代入二项分布概率密度函数可得
+$$
+\tag{2} b(i) = b(n , {1 \over 2} , i) = {n \choose i}({1 \over 2})^n
+$$
+
+$$
+\tag{Striling公式} n! \sim \sqrt{2\pi n}({n \over e})^n
+$$
+
+$$
+\tag{3} b({n \over 2}) = {n! \over {n \over 2}! (1 - {n \over 2})! }({1 \over 2})^n = { \sqrt{2\pi n }( {n \over e} )^n \over ( \sqrt{ 2\pi {n \over 2} }({ {n \over 2} \over e})^{n \over 2})^2} = \sqrt{ {2 \over \pi n} }
+$$
+
+$$
+\tag{4} {b({n \over 2} + d) \over b( {n \over 2} ) } \sim e^{-{2d^2 \over n} }
+$$
+
+$$
+\tag{5} b({n \over 2} + d) \sim {2 \over \sqrt{2 \pi n} }e^{-{2d^2 \over n} }
+$$
+
+使用上式的结果，并在二项概率累加求和的过程中近似的使用定积分代替求和，很容易就能得到
+
+![](https://ws3.sinaimg.cn/large/006tKfTcly1fl6e9swgifj30bu05pgly.jpg)
+$$
+\tag{6} P(|\frac{X}{n} - \frac{1}{2}| \le \frac{c} {\sqrt{n} } ) \sim \int_{-2c}^{2c} \frac{1}{\sqrt{2\pi}} e^{-{x^2 \over 2} } dx
+$$
+从而证得二项分布的极限分布是正态分布
+
+# 中心极限定理
+
+设随机变量 $ X_n (n=1,2,\cdots) $服从参数为 p 的二项分布，则对任意的x, 恒有
+$$
+\tag{中心极限定理} \lim_{n\rightarrow\infty} P\{ \frac {X_n - np} {\sqrt{np(1-p)} } \le x \} = \int_{-\infty}^x {1 \over \sqrt{2\pi} } e^{{-t^2 \over 2} }dt
+$$
+中心极限定理：中心极限定理说的是变量的观测值的平均数标准化后的极限分布是正态
+
+# 最小二乘法
+
+方程的累积误差为：**累积误差 = $\sum$(观测值 - 理论值)$^2$**
+$$
+\begin{equation} \begin{split}
+\theta &= \mathop{arg min}_{\theta} \sum_{i =1}^{n}(e_i)^2  \\
+&= \mathop{arg min}_{\theta} \sum_{i =1}^{n} \left[y_i  - (\theta_0 + \theta_1 x_1 + \cdots + \theta_k x_k) \right]^2
+ \end{split} \end{equation}
+$$
+Features:
+
+1. 最小二乘使得误差平方和最小，并在各个方程的误差之间建立了一种平衡，从而防止某个极端误差取得支配地位
+2. 计算中只要求偏导后求解线程方程组，计算过程明确便捷
+3. 最小二乘可以导出算术平均值作为估计值
+
+# 误差分布曲线
+
+误差的一些定性描述：
+
+1. 误差是对称分布的；误差分布函数f(x)关于零点对称分布，概率密度随|x|增加而减小
+2. 大的误差出现频率低，小的误差出现频率高
+
+设真值为$\theta$，$x_1,\cdots,x_n$为n次独立测量值，每次测量的误差为$e_i = x_i - \theta$，假设误差$e_i$的密度函数为$f(e)$，则测量值的联合概率为n个误差的联合概率，记为
+$$
+\tag{1} L(\theta) = L(\theta;x_1,\cdots,x_n) = f(e_1) \cdots f(e_n) = f(x_i - \theta) \cdots f(x_n - \theta)
+$$
+假设**误差分布导出的极大似然估计 = 算术平均值**，则取$L(\theta)$达到最大值的$\hat{\theta} = \hat{\theta}(x_1,\cdots,x_n)$作为$\theta$的估计值，即
+$$
+\tag{2} \hat{\theta} = \mathop{arg max}_{\theta} L(\theta)
+$$
+对(1)式两边同时取对数得
+$$
+\ln{L(\theta)} = \sum_{i-1}^n \ln{f(x_i - \theta)}
+$$
+求导得
+$$
+{d\ln{L(\theta}) \over d\theta}  = \sum_{i=1}^n {f^\prime(x_i - \theta) \over f(x_i - \theta)}
+$$
+为求极大似然估计，令
+$$
+\tag{3} {d\ln{L(\theta}) \over d\theta} = 0
+$$
+整理后得到
+$$
+\tag{4} \sum_{i=1}^n {f^\prime(x_i - \theta) \over f(x_i - \theta)} = 0
+$$
+令$g(x) = {f^\prime (x) \over f(x)}$
+$$
+\tag{5} \sum_{i=1}^n g(x_i - \theta) = 0
+$$
+由于上面我们假设极大似然估计的解$\theta$等于算术平均$\bar{x}$，带入(5)得到
+$$
+\tag{6} \sum_{i=1}^n g(x_i - \bar{x}) = 0
+$$
+(6)式中取n=2，有
+$$
+g(x_1 - \bar{x}) + g(x_2 - \bar{x}) = 0
+$$
+由于定性中指出f(x)是关于零点对称分布，所以f(x)应满足g(x) = g(-x)，所以此时有$x_1 - \bar{x} = -(x_2 - \bar{x})$，并且$x_1,x_2$是任意的，有此得到
+$$
+\tag{奇函数} g(-x) = -g(x)
+$$
+(6)式中再取n=m+1，并且要求$x1=\cdots=x_m = -x , x_m+1 = mx​$，则有$\bar{x} = 0​$，
+$$
+\bar{x} = {-x-x,\cdots-x+mx \over m+1} = 0
+$$
+并且
+$$
+\sum_{i=1}^n g(x_i - \bar{x}) = mg(-x) + g(mx)
+$$
+所以得到
+$$
+g(mx) = mg(x)
+$$
+而满足上式的唯一的连续函数只有$g(x) = cx$，积分后从而进一步可以求解出
+$$
+\begin{equation} \begin{split}
+
+&\because {d\ln{f(x)} \over dx}  = {f^\prime(x) \over f(x)} \\
+&\therefore \ln{f(x)} = \int {f^\prime(x) \over f(x)} dx = \int cx dx = {1 \over 2}cx^2 + c \\
+&\therefore f(x)=e^{{1 \over 2}cx^2 + c}=Me^{{1 \over 2}cx^2}   (M = e^c )
+
+\end{split} \end{equation}
+$$
+由于$f(x)$是概率分布函数，把$f(x)$正规化后可得到正态分布密度函数$N(0,{\varrho}^2)$
+
+由$\int_{-\infty}^{\infty} f(x)dx = 1 $(`概率密度函数的面积=1`)，所以定有c<0，取$c=-{1 \over \sigma^2}$，则有$M={1 \over \sqrt{2\pi}\sigma}$ ，所以
+$$
+\begin{split} 
+& 令 y = {x \over \sqrt2 \sigma} ;则 dx = \sqrt2\sigma y \\
+ & \because \int_{-\infty}^{\infty}e^{-x^2}  dx = \sqrt{\pi} \\
+
+&\therefore \int_{-\infty}^{\infty}Me^{ {1 \over 2}-{1 \over \sigma^2}x^2}  dx = M \int_{-\infty}^{\infty}e^{-y^2}(\sqrt2\sigma dy) = M\sqrt2\sigma \int_{-\infty}^{\infty}e^{-y^2}dy  \\
+&= M\sqrt{2\pi}\sigma = 1 \\
+
+
+&\therefore M = {1 \over \sqrt{2\pi}\sigma} \\
+ &f(x) = {1 \over \sqrt{2\pi}\sigma} e^{-{x^2 \over 2 \sigma^2} }
+
+\end{split}
+$$
+则$(e_1,\cdots,e_n)$的联合概率分布为
+$$
+(e_1,\cdots,e_n) \sim f(e_1)\cdots f(e_n) \sim {1 \over (\sqrt{2\pi}\sigma)^n} e^{-{1 \over 2\sigma^2} \sum_{i=1}^n(e_i)^2}
+$$
+要使得这个概率最大，必须使得$\sum_{i=1}^n (e_i)^2​$取最小值，这正好就是最小二乘法的要求
+
+# FYI
+
+[intro-normal-distribution](http://vdisk.weibo.com/s/hymAm/1352357338)
+
+[正态分布](https://zh.wikipedia.org/wiki/%E6%AD%A3%E6%80%81%E5%88%86%E5%B8%83)
+
+[还原正态分布之高斯推导过程](https://wenku.baidu.com/view/cc28983f5ef7ba0d4b733b8e.html?re=view)
+
+[对高斯分布函数形式的推导](http://www.doczj.com/doc/7d7396eef8c75fbfc77db275-1.html)
+
