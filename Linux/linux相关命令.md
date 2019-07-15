@@ -41,3 +41,8 @@ export PATH="/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/sbin:/bin:/sbin"
 
 1. awk中`print $0`会输出整行数据
 2. 内置match函数执行完后允许使用两个变量, `RLENGTH`是匹配的字符串的长度，`RSTART`是匹配的字符串第一次出现的下标
+
+# 磁盘空间
+
+1. [df和du的原理](https://blog.csdn.net/sch0120/article/details/50053295)
+
