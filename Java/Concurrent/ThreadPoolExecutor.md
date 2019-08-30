@@ -1,3 +1,5 @@
+[TOC]
+
 # 核心参数
 
 ```java
@@ -164,3 +166,35 @@ private boolean addWorker(Runnable firstTask, boolean core) {
     return workerStarted;
 }
 ```
+
+
+
+# Worker#run
+
+实际是调用`ThreadPoolExecutor#runWorker`方法
+
+```java
+final void runWokrer(Worker w) {
+    ...
+    // allow interrupts
+    w.unlock();   
+    boolean completedAbruptly = true;
+    try {
+        // getTask方法是从workQueue中take出task
+        while(w.task != null || (task = getTask()) != null) {
+            w.lock();
+            /** 状态检测是否需要执行interrupt()方法：
+            *   条件：是否处于STOP || 当处于STOP状态时线程是否被interrupted && 线程未被interrupted 
+            * 	原因：处于STOP时，线程必须被中断；第二个再次判断STOP的原因是因为当执行shutdownNow方法时，会立刻转换为STOP；第三个条件是为了确认此时线程shutdownNow()尚未开始中断此线程，由自己来中断
+            */
+            ....
+            // 执行run方法
+            task.run()
+        }
+        completedAbruptly = false;
+    }finally {
+       processWorkerExit(w, completedAbruptly); 
+    }
+}
+```
+
