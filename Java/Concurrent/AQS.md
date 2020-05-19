@@ -1,28 +1,61 @@
-# Node
+# CLH队列
 
-节点模式：
+队列构成：非逻辑队列，由CAS来控制内存状态
+
+- head：空结点 `new Node()` ;对应headOffset的内存地址
+- tail：初始等于head，后续为新结点；对应tailOffset的内存地址
+- 双指针：
+  - prev：前置结点
+  - next：后继结点
+- waitStatus：对应Node的结点状态
+
+## Node
+
+结点模式：
 
 - SHARED：共享
 - EXCLUSIVE：排他
 
-节点状态：
+结点状态：
 
 - 0：初始化状态
 - CANCELLED =  1：线程被cancelled
-- SIGNAL = -1：节点的继任节点被阻塞了，到时需要通知
+- SIGNAL = -1：结点的继任节点被阻塞了，到时需要通知
 - CONDITION = -2：线程正在等待condition
 - PROPAGATE = -3：仅在SHARED模式生效，锁的获取会传播给后续的节点
 
-# acqure
+# acquire
+
+![输入图片说明](https://static.oschina.net/uploads/img/201511/19151122_tpXi.jpg)
 
 ```Java
 /**
 * 1. tryAcquire:尝试获取exclusive mode下的对象
-* 2. acquireQueued：
+* 2. addWaiter：添加新结点至队尾
+* 3. acquireQueued：尝试获取锁
 */ 
 if (!tryAcquire(arg) &&
             acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
             selfInterrupt();
+```
+
+【addWaiter】
+
+```java
+Node node = new Node(Thread.currentThread(), mode);
+// Try the fast path of enq; backup to full enq on failure
+Node pred = tail;
+// 如果当前队尾存在结点，则直接入队并返回
+if (pred != null) {
+	node.prev = pred;
+	if (compareAndSetTail(pred, node)) {
+		pred.next = node;
+		return node;
+  }
+}
+// 执行入队操作
+enq(node);
+return node;
 ```
 
 【acquireQueued】
@@ -30,7 +63,7 @@ if (!tryAcquire(arg) &&
 ```Java
 boolean interrupted = false;
 for(;;) {
-  // 获取前置节点
+  // 获取前置结点
   final Node p = node.predecessor();
   // 如果前面没有人等待获取锁，则尝试获取
   if (p == head && tryAcquire(arg)) {
@@ -38,8 +71,9 @@ for(;;) {
   	setHead(node);
     // help gc
     p.next = null;
+    return interrupted;
   }
-  // 如果允许被挂起，则执行挂起操作：parkAndCheckInterrupt；让出资源并立即返回
+  // 如果允许被挂起，则执行挂起操作：parkAndCheckInterrupt
   if (shouldParkAfterFailedAcquire(p, node) &&
                     parkAndCheckInterrupt()) {
     interrupted = true;
@@ -53,7 +87,7 @@ for(;;) {
 int ws = pred.waitStatus;
 if (ws == Node.SIGNAL)
   return true;
-// 跳过被cancelled的节点
+// 跳过被cancelled的结点
 if (ws > 0) {
 	do {
 		node.prev = pred = pred.prev;
@@ -65,6 +99,40 @@ if (ws > 0) {
 }
 return false;
 ```
+
+
+
+# release
+
+```java
+// 尝试释放锁
+if (tryRelease(arg)) {
+  Node h = head;
+  // 头结点不为空，且不是初始化状态
+  if(h != null && h.waitStatus != 0) {
+    // 唤醒后继结点
+    unparkSuccessor(h);
+  }
+  return true;
+}
+return false;
+```
+
+【unparkSuccessor】
+
+```java
+int ws = node.waitStatus;
+// 将状态置为0
+if (ws < 0)
+  compareAndSetWaitStatus(node, ws, 0);
+
+// 找到后继结点：需要跳过cancelled的结点
+Node s = findNextNodeAndSkipCancelled(node)
+if(s != null) 
+  LockSupport.unpark(s.thread);
+```
+
+
 
 
 
