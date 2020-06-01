@@ -1,3 +1,7 @@
+# 资源
+
+- state：acquire和release来控制state的增减，state > 0时代表资源被占用；0被释放
+
 # CLH队列
 
 队列构成：非逻辑队列，由CAS来控制内存状态
