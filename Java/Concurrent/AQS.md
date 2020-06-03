@@ -1,6 +1,7 @@
-# 资源
+# 概念
 
-- state：acquire和release来控制state的增减，state > 0时代表资源被占用；0被释放
+- 资源state：acquire和release来控制state的增减，state > 0时代表资源被占用；0被释放
+- 锁状态：独占锁和共享锁
 
 # CLH队列
 
