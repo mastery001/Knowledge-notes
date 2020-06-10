@@ -52,6 +52,25 @@ TERMINATED > TIDYING > STOP > SHUTDOWN > RUNNING
 
 
 
+## 构造函数的参数
+
+1. `corePoolSize`：核心线程数，常驻执行的线程数
+2. `maximumPoolSize`：最大可创建的线程数
+3. `keepAliveTime`：超过核心线程数的空闲线程保持时间
+4. `unit`：时间单位
+5. `workQueue`：工作队列
+	- `SynchronousQueue`：同步队列，由于调用的是`offer(E e)`方法，所以无法存储任务，会直接走到创建新线程执行或队列满了的逻辑；一般用来处理前后任务有依赖的场景，例如A线程必须在B线程之前执行；为了达到这个目的，`corePoolSize`=0，`maximumPoolSize`=实际可能执行的个数(一般会设置为`Integer.MAX_VALUE`)；另外由于没有常驻核心线程，所以一般`keepAliveTime`需要按实际设置的长一些，防止不断创建新的线程
+	- `LinkedBlockingQueue`：无界队列，遵循`FIFO`策略，只能使用`corePoolSize`的线程；所以要使用这个队列要配置`corePoolSize`=`maximumPoolSize`，要不然`maximumPoolSize`配置不生效
+	- `ArrayBlockingQueue`：有界队列，遵循`FIFO`策略；如果队列满了，则走到handle处理
+6. `ThreadFactory`：创建线程的工厂
+7. `RejectedExecutionHandler handle`：拒绝策略，当队列或线程池都满了的情况的处理策略
+   - `AbortPolicy`：拒绝，直接抛出异常
+   - `CallerRunsPolicy`：使用当前提交任务的线程来执行
+   - `DiscardOldestPolicy`：丢弃队列头部的的任务，再重新提交给线程池
+   - `DiscardPolicy`：直接丢弃
+
+
+
 
 # execute
 
@@ -66,7 +85,7 @@ public void execute() {
             return;
         c = ctl.get();
     }
-    // 当前状态处于RUNNING，且队列还没满
+    // 当前状态处于RUNNING，且队列还没满，加入任务到队列
     if (isRunning(c) && workQueue.offer(command)) {
         // 这里再次校验状态，是为了保证如果此时是SHUTDOWN状态时，不允许新任务提交，要从workQueue中移除
         int recheck = ctl.get();
@@ -76,10 +95,10 @@ public void execute() {
         else if (workerCountOf(recheck) == 0)
             // 如果当前没有worker，则启动一个worker去拉取workerQueue中的task执行
             addWorker(null, false);
-        }
-    	// 如果任务队列加不进去，尝试再生成一个worker；如果还是失败，则代表线程池已满或已经关闭。
-        else if (!addWorker(command, false))
-            reject(command);
+    }
+    // 如果任务队列加不进去，尝试再生成一个worker；如果还是失败，则代表线程池已满或已经关闭。
+    else if (!addWorker(command, false))
+    	reject(command);
 }
 
 /**
