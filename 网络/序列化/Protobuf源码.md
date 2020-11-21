@@ -1,3 +1,70 @@
+[protobuf 编码实现解析（java）](https://www.cnblogs.com/onlysun/p/4574850.html)
+
+[issues-int32 promoted 64-bit](https://github.com/apple/swift-protobuf/issues/37)
+
+[protobuf encoding](https://developers.google.com/protocol-buffers/docs/encoding)
+
+[使用64位-补码的猜测](https://stackoverflow.com/questions/765916/is-there-ever-a-good-time-to-use-int32-instead-of-sint32-in-google-protocol-buff)
+
+```java
+public final void writeInt32NoTag(int value) throws IOException {
+  if (value >= 0) {
+    writeUInt32NoTag(value);
+  } else {
+    // 猜测可能是补码导致的，protobuf是采用2的补码方式来表示负整数，感觉是没有使用符号位缩减的特性(即long强转为int)，估计是最初开发的时候忽略了这个问题，后面不好修复；在2.5版本中，读取int都是直接丢弃大于32个字节的数字
+    // Must sign-extend.
+    writeUInt64NoTag(value);
+  }
+}
+```
+
+
+
+【2.5.0的代码】
+
+```java
+/**
+ * 虽然写入也是10个字节，但是读取的时候就直接丢弃了后面的字节
+ * Read a raw Varint from the stream.  If larger than 32 bits, discard the
+ * upper bits.
+ */
+public int readRawVarint32() throws IOException {
+  byte tmp = readRawByte();
+  if (tmp >= 0) {
+    return tmp;
+  }
+  int result = tmp & 0x7f;
+  if ((tmp = readRawByte()) >= 0) {
+    result |= tmp << 7;
+  } else {
+    result |= (tmp & 0x7f) << 7;
+    if ((tmp = readRawByte()) >= 0) {
+      result |= tmp << 14;
+    } else {
+      result |= (tmp & 0x7f) << 14;
+      if ((tmp = readRawByte()) >= 0) {
+        result |= tmp << 21;
+      } else {
+        result |= (tmp & 0x7f) << 21;
+        result |= (tmp = readRawByte()) << 28;
+        if (tmp < 0) {
+          // Discard upper 32 bits.
+          for (int i = 0; i < 5; i++) {
+            if (readRawByte() >= 0) {
+              return result;
+            }
+          }
+          throw InvalidProtocolBufferException.malformedVarint();
+        }
+      }
+    }
+  }
+  return result;
+}
+```
+
+
+
 
 
 ```java
