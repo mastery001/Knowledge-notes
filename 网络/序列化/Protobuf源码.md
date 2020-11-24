@@ -6,6 +6,10 @@
 
 [使用64位-补码的猜测](https://stackoverflow.com/questions/765916/is-there-ever-a-good-time-to-use-int32-instead-of-sint32-in-google-protocol-buff)
 
+[负数64位原因](https://stackoverflow.com/questions/28533167/protocol-buffers-negative-int32-int64-encoders-specifications-are-fuzzy?answertab=active#tab-top)：C++可以将int64转为uint64进行编码，而Protobuf在C++正是这样做的
+
+[Protobuf-C源码](https://github.com/protobuf-c/protobuf-c/blob/master/protobuf-c/protobuf-c.c#L811)：负数使用二进制补码的64位整数来编码
+
 ```java
 public final void writeInt32NoTag(int value) throws IOException {
   if (value >= 0) {
