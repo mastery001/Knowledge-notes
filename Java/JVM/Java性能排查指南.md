@@ -1,6 +1,6 @@
 # 1. CPU相关
 
-```
+```shell
 # 查询
 top -H -p pid
 ```
@@ -11,7 +11,7 @@ top -H -p pid
 
 ## 2.1 磁盘IO
 
-```
+```shell
 iostat -d -x -m 1 10
 
 disk属性值说明：
@@ -40,7 +40,7 @@ svctm: 平均每次设备I/O操作的服务时间 (毫秒)。
 
 常用命令如下：
 
-```
+```shell
 sar -n DEV 1 10
 
 # 每10秒采样一次，连续采样3次，观察CPU 的使用情况；iowait和idle
@@ -85,11 +85,34 @@ cat /proc/net/sockstat6
 
 ## 3.1 JVM堆dump
 
-```
+```shell
 # 打印当前堆栈，详细可查看 jmap -help
 jmap -histo pid
 
+# 打印当前堆栈的大小
+jmap -heap pid
+
 # 打印文件
 jmap  -F -dump:format=b,file=filename pid
+```
+
+## 3.2 pmap
+
+pmap 提供了进程的内存映射，pmap 命令用于显示一个或多个进程的内存状态。
+
+```shell
+pmap -x pid
+### 以下为输出
+Address           Kbytes     RSS   Dirty Mode  Mapping
+0000000000400000       4       4       0 r-x-- python2.7
+### 说明如下
+Address: 内存开始地址
+Kbytes: 占用内存的字节数（KB）
+RSS: 保留内存的字节数（KB）
+Dirty: 脏页的字节数（包括共享和私有的）（KB）
+Mode: 内存的权限：read、write、execute、shared、private (写时复制)
+Mapping: 占用内存的文件、或[anon]（分配的内存）、或[stack]（堆栈）
+Offset: 文件偏移
+Device: 设备名 (major:minor)
 ```
 
